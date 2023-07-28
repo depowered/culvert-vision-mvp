@@ -6,5 +6,7 @@ setup(
     install_requires=[
         "dagster",
     ],
-    extras_require={"dev": ["dagster-webserver", "pytest"]},
+    extras_require={
+        "dev": ["dagster-webserver", "pytest", "ruff", "black", "isort", "pyright"]
+    },
 )
