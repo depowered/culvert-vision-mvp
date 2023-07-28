@@ -1,9 +1,7 @@
 from dagster import Definitions, load_assets_from_modules
 
-from . import assets
+from cv_assets.vectors import usgs_wesm
 
-all_assets = load_assets_from_modules([assets])
+vector_assets = load_assets_from_modules([usgs_wesm], group_name="vectors")
 
-defs = Definitions(
-    assets=all_assets,
-)
+defs = Definitions(assets=vector_assets)
