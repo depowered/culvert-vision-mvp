@@ -2,9 +2,17 @@ name: culvert-vision-mvp
 channels:
   - conda-forge
 dependencies:
+  # Python packages
   - python=3.11
-  - pip
   - dagster
 
+  - pip
   - pip:
     - -e ./cv-assets/[dev]
+
+  # Unix utilities
+  - curl
+
+  # Geospatial
+  - gdal
+  - libgdal-arrow-parquet
