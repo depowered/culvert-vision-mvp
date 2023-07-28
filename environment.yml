@@ -1,0 +1,6 @@
+name: culvert-vision-mvp
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - dagster
