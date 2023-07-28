@@ -1,4 +1,4 @@
-.PHONY: create_env update_env remove_env activate_env deactivate_env
+.PHONY: create_env update_env remove_env activate_env deactivate_env lint clean_cache
 
 #################################################################################
 # ENVIRONMENT MANAGEMENT                                                        #
@@ -27,6 +27,22 @@ activate_env:
 deactivate_env:
 	@echo "To deactivate an activate environment, use\n"
 	@echo "\t$$ mamba deactivate\n"
+
+#################################################################################
+# CODE MANAGEMENT                                                               #
+#################################################################################
+
+## Lint and format code
+lint:
+	isort cv-assets
+	black cv-assets
+	ruff cv-assets
+
+## Delete cache
+clean_cache:
+	find . -type f -name "*.py[co]" -delete
+	find . -type d -name "__pycache__" -delete
+	ruff clean
 
 #################################################################################
 # Self Documenting Commands                                                     #
