@@ -1,32 +1,4 @@
-.PHONY: create_env update_env remove_env activate_env deactivate_env lint clean_cache dagster_dev
-
-#################################################################################
-# ENVIRONMENT MANAGEMENT                                                        #
-#################################################################################
-
-MAMBA_ENV = culvert-vision-mvp
-
-## Set up the conda environment
-create_env:
-	mamba env create --name $(MAMBA_ENV) --file environment.yml
-
-## Update the conda environment to reflect changes to environment.yml
-update_env:
-	mamba env update --name $(MAMBA_ENV) --file environment.yml --prune
-
-## Remove the conda environment
-remove_env:
-	conda env remove --name $(MAMBA_ENV)
-
-## Displays the command to activate the conda environment
-activate_env:
-	@echo "To activate this environment, use\n"
-	@echo "\t$$ mamba activate $(MAMBA_ENV)\n"
-
-## Displays the command to deactivate an active environment
-deactivate_env:
-	@echo "To deactivate an activate environment, use\n"
-	@echo "\t$$ mamba deactivate\n"
+.PHONY: lint clean_cache dagster_dev
 
 #################################################################################
 # CODE MANAGEMENT                                                               #
@@ -34,9 +6,9 @@ deactivate_env:
 
 ## Lint and format code
 lint:
-	isort cv-assets
-	black cv-assets
-	ruff cv-assets
+	isort cv_assets
+	black cv_assets
+	ruff cv_assets
 
 ## Delete cache
 clean_cache:
