@@ -1,7 +1,7 @@
 from dagster import Definitions, load_assets_from_modules
 
 from cv_assets.config import get_settings
-from cv_assets.postgis import PostGISResource
+from cv_assets.resources.postgis import PostGISResource
 from cv_assets.vectors import mndnr_culvert_inventory, usgs_opr_tesm, usgs_wesm
 
 vector_assets = load_assets_from_modules(

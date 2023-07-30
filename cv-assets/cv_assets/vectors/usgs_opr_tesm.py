@@ -4,7 +4,7 @@ from string import Template
 from dagster import asset
 
 from cv_assets.config import get_settings
-from cv_assets.file_asset import VectorFileAsset
+from cv_assets.resources.file_asset import VectorFileAsset
 from cv_assets.vectors.usgs_wesm import workunit_ids  # noqa F411
 
 settings = get_settings()
