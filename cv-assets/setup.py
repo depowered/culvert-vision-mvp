@@ -3,9 +3,7 @@ from setuptools import find_packages, setup
 setup(
     name="cv_assets",
     packages=find_packages(exclude=["cv_assets_tests"]),
-    install_requires=[
-        "dagster",
-    ],
+    install_requires=["dagster", "python-dotenv"],
     extras_require={
         "dev": ["dagster-webserver", "pytest", "ruff", "black", "isort", "pyright"]
     },

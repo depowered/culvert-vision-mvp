@@ -4,7 +4,7 @@ channels:
 dependencies:
   # Python packages
   - python=3.11
-  - dagster
+  - dagster=1.4.2
 
   - pip
   - pip:
