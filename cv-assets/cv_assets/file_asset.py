@@ -1,8 +1,9 @@
 from pathlib import Path
 
-from cv_assets.settings import Settings
+from cv_assets.config import get_settings
 
-FILE_ASSET_STORAGE_DIR = Settings().file_asset_storage_dir.resolve()
+settings = get_settings()
+FILE_ASSET_STORAGE_DIR = settings.file_asset_storage_dir.resolve()
 
 
 class FileAsset:
