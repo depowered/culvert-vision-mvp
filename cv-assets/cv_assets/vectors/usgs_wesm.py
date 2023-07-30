@@ -5,7 +5,7 @@ import pandas as pd
 from dagster import asset
 
 from cv_assets.config import get_settings
-from cv_assets.resources.file_asset import VectorFileAsset
+from cv_assets.resources.vector_file_asset import VectorFileAsset
 
 settings = get_settings()
 TARGET_EPSG = settings.target_epsg
