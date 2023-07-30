@@ -1,10 +1,11 @@
 import subprocess
 from string import Template
 
+from dagster import asset
+
 from cv_assets.file_asset import VectorFileAsset
 from cv_assets.settings import Settings
-from cv_assets.vectors.usgs_wesm import workunit_ids
-from dagster import asset
+from cv_assets.vectors.usgs_wesm import workunit_ids  # noqa F411
 
 TARGET_EPSG = Settings().target_epsg
 
@@ -17,7 +18,7 @@ def raw_usgs_opr_tesm() -> VectorFileAsset:
     output = VectorFileAsset("raw_usgs_opr_tesm.gpkg")
 
     # The file is large, avoid redownloading if it already exists
-    if output.get_path().exists:  # TODO: This returns True when the file doesn't exist
+    if output.get_path().exists():
         return output
 
     cmd = Template("curl --create-dirs --output $output $url")
@@ -34,9 +35,9 @@ def raw_usgs_opr_tesm() -> VectorFileAsset:
     return output
 
 
-@asset(deps=workunit_ids)
+@asset
 def stg_usgs_opr_tesm(
-    raw_usgs_opr_tesm: VectorFileAsset, workunit_ids: list[int]
+    raw_usgs_opr_tesm: VectorFileAsset, workunit_ids: list[int]  # noqa F811
 ) -> VectorFileAsset:
     """Filter and reproject USGS OPR TESM GeoPackage to Parquet"""
 

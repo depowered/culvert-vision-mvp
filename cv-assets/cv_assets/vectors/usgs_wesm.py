@@ -2,9 +2,10 @@ import subprocess
 from string import Template
 
 import pandas as pd
+from dagster import asset
+
 from cv_assets.file_asset import VectorFileAsset
 from cv_assets.settings import Settings
-from dagster import asset
 
 TARGET_EPSG = Settings().target_epsg
 
@@ -16,7 +17,7 @@ def raw_usgs_wesm() -> VectorFileAsset:
     output = VectorFileAsset("raw_usgs_wesm.gpkg")
 
     # The file is large, avoid redownloading if it already exists
-    if output.get_path().exists:
+    if output.get_path().exists():
         return output
 
     cmd = Template("curl --create-dirs --output $output $url")
