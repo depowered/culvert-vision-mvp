@@ -1,6 +1,9 @@
 # Project data
 data/
 
+# Workspace VS Code Settings
+.vscode/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
