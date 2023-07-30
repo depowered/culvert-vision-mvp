@@ -2,7 +2,6 @@ from pathlib import Path
 
 from cv_assets.settings import Settings
 
-
 FILE_ASSET_STORAGE_DIR = Settings().file_asset_storage_dir.resolve()
 
 
