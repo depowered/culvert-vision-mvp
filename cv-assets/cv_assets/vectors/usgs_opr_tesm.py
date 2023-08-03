@@ -1,6 +1,3 @@
-import subprocess
-import tempfile
-from pathlib import Path
 from string import Template
 
 from dagster import asset
@@ -8,6 +5,8 @@ from dagster import asset
 from cv_assets.config import get_settings
 from cv_assets.resources.postgis import PGTable, PostGISResource
 from cv_assets.resources.vector_file_asset import VectorFileAsset
+from cv_assets.utils import run_shell_cmd
+from cv_assets.vectors.load_pg_table import load_table_from_parquet
 from cv_assets.vectors.usgs_wesm import workunit_ids  # noqa F411
 
 settings = get_settings()
@@ -27,13 +26,10 @@ def raw_usgs_opr_tesm() -> VectorFileAsset:
 
     cmd = Template("curl --create-dirs --output $output $url")
 
-    subprocess.run(
-        args=cmd.substitute(
-            output=output.get_path(),
-            url="https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/OPR/FullExtentSpatialMetadata/OPR_TESM.gpkg",
-        ),
-        shell=True,  # Allows args to be passed as a string
-        check=True,  # Prevents cmd from failing silently
+    run_shell_cmd(
+        cmd=cmd,
+        output=output.get_path(),
+        url="https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/OPR/FullExtentSpatialMetadata/OPR_TESM.gpkg",
     )
 
     return output
@@ -57,15 +53,12 @@ def stg_usgs_opr_tesm(
         """
     )
 
-    subprocess.run(
-        args=cmd.substitute(
-            to_srs=f"EPSG:{TARGET_EPSG}",
-            workunit_ids=tuple(workunit_ids),
-            output=output.get_path(),
-            input=raw_usgs_opr_tesm.get_path(),
-        ),
-        shell=True,  # Allows args to be passed as a string
-        check=True,  # Prevents cmd from failing silently
+    run_shell_cmd(
+        cmd=cmd,
+        to_srs=f"EPSG:{TARGET_EPSG}",
+        workunit_ids=tuple(workunit_ids),
+        output=output.get_path(),
+        input=raw_usgs_opr_tesm.get_path(),
     )
 
     return output
@@ -76,46 +69,13 @@ def pg_stg_usgs_opr_tesm(
     stg_usgs_opr_tesm: VectorFileAsset, postgis: PostGISResource
 ) -> PGTable:
     """Load USGS OPR TESM Parquet into PostGIS table"""
-    output = PGTable(schema="public", table="stg_usgs_opr_tesm")
+    output = PGTable(schema="mn", table="usgs_opr_tiles")
 
-    # Dump parquet content to PGDump
-    dump_cmd = Template(
-        """
-        ogr2ogr --config PG_USE_COPY YES -f PGDump $output $input \
-            -nln $table \
-            -nlt PROMOTE_TO_MULTI \
-            -lco GEOMETRY_NAME=geom \
-            -lco DIM=2 \
-            -lco SCHEMA=$schema \
-            -lco CREATE_SCHEMA=ON \
-            -lco DROP_TABLE=IF_EXISTS \
-            -lco SPATIAL_INDEX=GIST
-        """
+    load_table_from_parquet(
+        input=stg_usgs_opr_tesm.get_path(),
+        dsn=postgis.dsn,
+        schema=output.schema,
+        table=output.table,
     )
-
-    # Load the PGDump into the database
-    load_cmd = Template("psql --file $input $dsn")
-
-    with tempfile.TemporaryDirectory() as tempdir:
-        pg_dump = Path(tempdir) / "stg_usgs_wesm.sql"
-        subprocess.run(
-            args=dump_cmd.substitute(
-                output=pg_dump,
-                input=stg_usgs_opr_tesm.get_path(),
-                table=output.table,
-                schema=output.schema,
-            ),
-            shell=True,  # Allows args to be passed as a string
-            check=True,  # Prevents cmd from failing silently
-        )
-
-        subprocess.run(
-            args=load_cmd.substitute(
-                input=pg_dump,
-                dsn=postgis.dsn,
-            ),
-            shell=True,  # Allows args to be passed as a string
-            check=True,  # Prevents cmd from failing silently
-        )
 
     return output
