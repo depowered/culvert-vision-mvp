@@ -1,9 +1,12 @@
 import subprocess
+import tempfile
+from pathlib import Path
 from string import Template
 
 from dagster import asset
 
 from cv_assets.config import get_settings
+from cv_assets.resources.postgis import PGTable, PostGISResource
 from cv_assets.resources.vector_file_asset import VectorFileAsset
 from cv_assets.vectors.usgs_wesm import workunit_ids  # noqa F411
 
@@ -64,5 +67,55 @@ def stg_usgs_opr_tesm(
         shell=True,  # Allows args to be passed as a string
         check=True,  # Prevents cmd from failing silently
     )
+
+    return output
+
+
+@asset
+def pg_stg_usgs_opr_tesm(
+    stg_usgs_opr_tesm: VectorFileAsset, postgis: PostGISResource
+) -> PGTable:
+    """Load USGS OPR TESM Parquet into PostGIS table"""
+    output = PGTable(schema="public", table="stg_usgs_opr_tesm")
+
+    # Dump parquet content to PGDump
+    dump_cmd = Template(
+        """
+        ogr2ogr --config PG_USE_COPY YES -f PGDump $output $input \
+            -nln $table \
+            -nlt PROMOTE_TO_MULTI \
+            -lco GEOMETRY_NAME=geom \
+            -lco DIM=2 \
+            -lco SCHEMA=$schema \
+            -lco CREATE_SCHEMA=ON \
+            -lco DROP_TABLE=IF_EXISTS \
+            -lco SPATIAL_INDEX=GIST
+        """
+    )
+
+    # Load the PGDump into the database
+    load_cmd = Template("psql --file $input $dsn")
+
+    with tempfile.TemporaryDirectory() as tempdir:
+        pg_dump = Path(tempdir) / "stg_usgs_wesm.sql"
+        subprocess.run(
+            args=dump_cmd.substitute(
+                output=pg_dump,
+                input=stg_usgs_opr_tesm.get_path(),
+                table=output.table,
+                schema=output.schema,
+            ),
+            shell=True,  # Allows args to be passed as a string
+            check=True,  # Prevents cmd from failing silently
+        )
+
+        subprocess.run(
+            args=load_cmd.substitute(
+                input=pg_dump,
+                dsn=postgis.dsn,
+            ),
+            shell=True,  # Allows args to be passed as a string
+            check=True,  # Prevents cmd from failing silently
+        )
 
     return output
