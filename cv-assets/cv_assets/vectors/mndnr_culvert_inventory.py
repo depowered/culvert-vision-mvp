@@ -1,4 +1,3 @@
-import subprocess
 from string import Template
 
 from dagster import asset
@@ -6,6 +5,7 @@ from dagster import asset
 from cv_assets.config import get_settings
 from cv_assets.resources.postgis import PGTable, PostGISResource
 from cv_assets.resources.vector_file_asset import VectorFileAsset
+from cv_assets.utils import run_shell_cmd
 from cv_assets.vectors.load_pg_table import load_table_from_parquet
 
 settings = get_settings()
@@ -23,13 +23,10 @@ def raw_mndnr_culvert_inventory() -> VectorFileAsset:
 
     cmd = Template("curl --create-dirs --output $output $url")
 
-    subprocess.run(
-        args=cmd.substitute(
-            output=output.get_path(),
-            url="https://resources.gisdata.mn.gov/pub/gdrs/data/pub/us_mn_state_dnr/struc_culvert_inventory_pub/fgdb_struc_culvert_inventory_pub.zip",
-        ),
-        shell=True,  # Allows args to be passed as a string
-        check=True,  # Prevents cmd from failing silently
+    run_shell_cmd(
+        cmd=cmd,
+        output=output.get_path(),
+        url="https://resources.gisdata.mn.gov/pub/gdrs/data/pub/us_mn_state_dnr/struc_culvert_inventory_pub/fgdb_struc_culvert_inventory_pub.zip",
     )
 
     return output
@@ -54,14 +51,11 @@ def stg_mndnr_stream_crossing_summary(
         """
     )
 
-    subprocess.run(
-        args=cmd.substitute(
-            to_srs=f"EPSG:{TARGET_EPSG}",
-            output=output.get_path(),
-            input=raw_mndnr_culvert_inventory.get_path(),
-        ),
-        shell=True,  # Allows args to be passed as a string
-        check=True,  # Prevents cmd from failing silently
+    run_shell_cmd(
+        cmd=cmd,
+        to_srs=f"EPSG:{TARGET_EPSG}",
+        output=output.get_path(),
+        input=raw_mndnr_culvert_inventory.get_path(),
     )
 
     return output
@@ -106,14 +100,11 @@ def int_mndnr_culvert_opening(
         """
     )
 
-    subprocess.run(
-        args=cmd.substitute(
-            to_srs=f"EPSG:{TARGET_EPSG}",
-            output=output.get_path(),
-            input=raw_mndnr_culvert_inventory.get_path(),
-        ),
-        shell=True,  # Allows args to be passed as a string
-        check=True,  # Prevents cmd from failing silently
+    run_shell_cmd(
+        cmd=cmd,
+        to_srs=f"EPSG:{TARGET_EPSG}",
+        output=output.get_path(),
+        input=raw_mndnr_culvert_inventory.get_path(),
     )
 
     return output
@@ -129,13 +120,10 @@ def stg_mndnr_culvert_opening(
 
     cmd = Template("ogr2ogr -f Parquet $output $input")
 
-    subprocess.run(
-        args=cmd.substitute(
-            output=output.get_path(),
-            input=int_mndnr_culvert_opening.get_path(),
-        ),
-        shell=True,  # Allows args to be passed as a string
-        check=True,  # Prevents cmd from failing silently
+    run_shell_cmd(
+        cmd=cmd,
+        output=output.get_path(),
+        input=int_mndnr_culvert_opening.get_path(),
     )
 
     return output
