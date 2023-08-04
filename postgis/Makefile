@@ -1,16 +1,24 @@
-.PHONY: start_postgis stop_postgis
+.PHONY: start_postgis_dev stop_postgis_dev start_postgis_prod stop_postgis_prod
 
 #################################################################################
 # PostGIS Management                                                            #
 #################################################################################
 
-## Launch PostGIS docker container
-start_postgis:
+## Launch development PostGIS database
+start_postgis_dev:
 	docker compose up -d postgis-dev
 
-## Shutdown PostGIS docker container
-stop_postgis:
+## Shutdown development PostGIS database
+stop_postgis_dev:
 	docker compose down postgis-dev
+
+## Launch production PostGIS database
+start_postgis_prod:
+	docker compose --env-file prod.env up -d  postgis-prod dbbackups
+
+## Shutdown production PostGIS database
+stop_postgis_prod:
+	docker compose down postgis-prod dbbackups
 
 #################################################################################
 # Self Documenting Commands                                                     #
