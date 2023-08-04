@@ -3,11 +3,11 @@ from pathlib import Path
 from cv_assets.config import get_settings
 
 settings = get_settings()
-FILE_ASSET_STORAGE_DIR = settings.file_asset_storage_dir.resolve()
+STORAGE_DIR = settings.file_asset_storage_dir.resolve() / "vector"
 
 
-class FileAsset:
-    _base_path: Path = FILE_ASSET_STORAGE_DIR
+class VectorFileAsset:
+    _base_path: Path = STORAGE_DIR
 
     def __init__(self, filename: str) -> None:
         self.filename = filename
@@ -18,7 +18,3 @@ class FileAsset:
     def get_path(self) -> Path:
         self._make_parent_directories()
         return self._base_path / self.filename
-
-
-class VectorFileAsset(FileAsset):
-    _base_path: Path = FILE_ASSET_STORAGE_DIR / "vector"

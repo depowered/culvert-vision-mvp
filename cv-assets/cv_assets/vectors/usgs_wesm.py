@@ -1,11 +1,13 @@
-import subprocess
 from string import Template
 
 import pandas as pd
 from dagster import asset
 
 from cv_assets.config import get_settings
-from cv_assets.file_asset import VectorFileAsset
+from cv_assets.resources.postgis import PGTable, PostGISResource
+from cv_assets.resources.vector_file_asset import VectorFileAsset
+from cv_assets.utils import run_shell_cmd
+from cv_assets.vectors.load_pg_table import load_table_from_parquet
 
 settings = get_settings()
 TARGET_EPSG = settings.target_epsg
@@ -23,13 +25,10 @@ def raw_usgs_wesm() -> VectorFileAsset:
 
     cmd = Template("curl --create-dirs --output $output $url")
 
-    subprocess.run(
-        args=cmd.substitute(
-            output=output.get_path(),
-            url="https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/metadata/WESM.gpkg",
-        ),
-        shell=True,  # Allows args to be passed as a string
-        check=True,  # Prevents cmd from failing silently
+    run_shell_cmd(
+        cmd=cmd,
+        output=output.get_path(),
+        url="https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/metadata/WESM.gpkg",
     )
 
     return output
@@ -51,14 +50,11 @@ def stg_usgs_wesm(raw_usgs_wesm: VectorFileAsset) -> VectorFileAsset:
         """
     )
 
-    subprocess.run(
-        args=cmd.substitute(
-            output=output.get_path(),
-            input=raw_usgs_wesm.get_path(),
-            to_srs=f"EPSG:{TARGET_EPSG}",
-        ),
-        shell=True,  # Allows args to be passed as a string
-        check=True,  # Prevents cmd from failing silently
+    run_shell_cmd(
+        cmd=cmd,
+        output=output.get_path(),
+        input=raw_usgs_wesm.get_path(),
+        to_srs=f"EPSG:{TARGET_EPSG}",
     )
 
     return output
@@ -70,3 +66,20 @@ def workunit_ids(stg_usgs_wesm: VectorFileAsset) -> list[int]:
     criteria for USGS OPR TESM"""
     df = pd.read_parquet(path=stg_usgs_wesm.get_path(), columns=["workunit_id"])
     return df["workunit_id"].to_list()
+
+
+@asset
+def pg_stg_usgs_wesm(
+    stg_usgs_wesm: VectorFileAsset, postgis: PostGISResource
+) -> PGTable:
+    """Load USGS WESM Parquet into PostGIS table"""
+    output = PGTable(schema="mn", table="usgs_workunits")
+
+    load_table_from_parquet(
+        input=stg_usgs_wesm.get_path(),
+        dsn=postgis.dsn,
+        schema=output.schema,
+        table=output.table,
+    )
+
+    return output

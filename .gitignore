@@ -4,6 +4,9 @@ data/
 # Workspace VS Code Settings
 .vscode/
 
+# DS_Store
+.DS_Store
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -126,7 +129,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
+*.env
 .venv
 env/
 venv/
