@@ -9,7 +9,7 @@ volumes:
 
 services:
   postgis-dev:
-    image: kartoza/postgis:15-3.3
+    image: kartoza/postgis:14-3.3
     volumes:
       - culvert-vision-mvp-pg-dev-data:/var/lib/postgresql
     environment:
