@@ -1,3 +1,4 @@
+from dotenv import find_dotenv, load_dotenv
 from pydantic import BaseSettings, DirectoryPath
 
 
@@ -18,4 +19,5 @@ class Settings(BaseSettings):
 
 
 def get_settings() -> Settings:
+    load_dotenv(find_dotenv())
     return Settings()

@@ -18,13 +18,5 @@ settings = get_settings()
 
 defs = Definitions(
     assets=vector_assets,
-    resources={
-        "postgis": PostGISResource(
-            dbname=settings.postgres_db,
-            username=settings.postgres_user,
-            password=settings.postgres_pass,
-            host=settings.postgres_host,
-            port=settings.postgres_port,
-        )
-    },
+    resources={"postgis": PostGISResource.from_config(settings)},
 )
