@@ -3,7 +3,7 @@ from pathlib import Path
 from cv_assets.config import get_settings
 
 settings = get_settings()
-STORAGE_DIR = settings.file_asset_storage_dir.resolve() / "vector"
+STORAGE_DIR = settings.file_storage_dir.resolve() / "vector"
 
 
 class VectorFileAsset:

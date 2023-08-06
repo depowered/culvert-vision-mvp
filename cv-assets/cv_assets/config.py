@@ -3,7 +3,7 @@ from pydantic import BaseSettings, DirectoryPath
 
 
 class Settings(BaseSettings):
-    file_asset_storage_dir: DirectoryPath
+    file_storage_dir: DirectoryPath
 
     target_epsg: int
 
