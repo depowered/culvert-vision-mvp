@@ -29,14 +29,32 @@ class LocalVectorFileStorage(ConfigurableResource):
         return self._get_file(filename)
 
     def get_file_by_asset_key(self, asset_key: str) -> VectorFile:
-        parts = asset_key.split("_")
-
-        # Handle special cases like zipped geodatabases
-        if parts[-2:] == ["gdb", "zip"]:
-            extension = "gdb.zip"
-            filename = f"{parts[:-2]}.{extension}"
-            return self._get_file(filename)
-
-        extension = parts[-1:]
-        filename = f"{parts[:-1]}.{extension}"
+        filename = get_filename_by_asset_key(asset_key)
         return self._get_file(filename)
+
+
+def get_filename_by_asset_key(asset_key: str) -> str:
+    """
+    Returns the filename associated with the given asset key. The last part(s) of the
+    asset key are assumed to be the file extension.
+
+    Parameters:
+        asset_key (str): The asset key to retrieve the filename for.
+
+    Returns:
+        str: The filename associated with the asset key.
+
+    Example:
+        >>> get_filename_by_asset_key("usgs_wesm_gpkg")
+        "usgs_wesm.gpkg"
+        >>> get_filename_by_asset_key("usgs_wesm_gdb_zip")
+        "usgs_wesm.gdb.zip"
+    """
+    parts = asset_key.split("_")
+
+    if parts[-2:] == ["gdb", "zip"]:
+        filename = "_".join(parts[:-2]) + ".gdb.zip"
+    else:
+        filename = "_".join(parts[:-1]) + "." + parts[-1]
+
+    return filename
