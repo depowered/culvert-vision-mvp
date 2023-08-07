@@ -4,7 +4,7 @@ from dagster import asset
 
 from cv_assets.config import get_settings
 from cv_assets.resources.postgis import PGTable, PostGISResource
-from cv_assets.resources.vector_file_asset import VectorFileAsset
+from cv_assets.resources.vector import LocalVectorFileStorage, VectorFile
 from cv_assets.utils import run_shell_cmd
 from cv_assets.vectors.load_pg_table import load_table_from_parquet
 
@@ -13,16 +13,20 @@ TARGET_EPSG = settings.target_epsg
 
 
 @asset
-def raw_mndnr_watershed_suite() -> VectorFileAsset:
+def raw_mndnr_watershed_suite(vector_storage: LocalVectorFileStorage) -> VectorFile:
     """Download MnDNR Watershed Suite as a GeoPackage."""
 
-    output = VectorFileAsset("raw_mndnr_watershed_suite.gpkg.zip")
+    output = vector_storage.get_file_by_filename("raw_mndnr_watershed_suite.gpkg.zip")
+
+    # The file is large, avoid redownloading if it already exists
+    if output.path.exists():
+        return output
 
     cmd = Template("curl --create-dirs --output $output $url")
 
     run_shell_cmd(
         cmd=cmd,
-        output=output.get_path(),
+        output=output.path,
         url="https://resources.gisdata.mn.gov/pub/gdrs/data/pub/us_mn_state_dnr/geos_dnr_watersheds/gpkg_geos_dnr_watersheds.zip",
     )
 
@@ -31,12 +35,13 @@ def raw_mndnr_watershed_suite() -> VectorFileAsset:
 
 @asset
 def stg_mndnr_level_8_catchments(
-    raw_mndnr_watershed_suite: VectorFileAsset,
-) -> VectorFileAsset:
+    vector_storage: LocalVectorFileStorage,
+    raw_mndnr_watershed_suite: VectorFile,
+) -> VectorFile:
     """Extract and reproject the Level 8 All Catchments layer from the MnDOT Watershed
     Suite and write to Parquet."""
 
-    output = VectorFileAsset("stg_mndnr_level_8_catchments.parquet")
+    output = vector_storage.get_file_by_filename("stg_mndnr_level_8_catchments.parquet")
 
     cmd = Template(
         """
@@ -51,8 +56,8 @@ def stg_mndnr_level_8_catchments(
     run_shell_cmd(
         cmd=cmd,
         to_srs=f"EPSG:{TARGET_EPSG}",
-        output=output.get_path(),
-        input=raw_mndnr_watershed_suite.get_path(),
+        output=output.path,
+        input=raw_mndnr_watershed_suite.path,
     )
 
     return output
@@ -60,13 +65,13 @@ def stg_mndnr_level_8_catchments(
 
 @asset
 def pg_stg_mndnr_level_8_catchments(
-    stg_mndnr_level_8_catchments: VectorFileAsset, postgis: PostGISResource
+    stg_mndnr_level_8_catchments: VectorFile, postgis: PostGISResource
 ) -> PGTable:
     """Load MnDNR Level 8 Catchments Parquet into PostGIS table"""
     output = PGTable(schema="mn", table="mndnr_level_8_catchments")
 
     load_table_from_parquet(
-        input=stg_mndnr_level_8_catchments.get_path(),
+        input=stg_mndnr_level_8_catchments.path,
         dsn=postgis.dsn,
         schema=output.schema,
         table=output.table,
