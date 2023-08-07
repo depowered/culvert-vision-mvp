@@ -28,12 +28,12 @@ class LocalVectorFileStorage(ConfigurableResource):
     def get_file_by_filename(self, filename: str) -> VectorFile:
         return self._get_file(filename)
 
-    def get_file_by_asset_key(self, asset_key: str) -> VectorFile:
-        filename = get_filename_by_asset_key(asset_key)
+    def get_file_by_asset_name(self, asset_key: str) -> VectorFile:
+        filename = get_filename_by_asset_name(asset_key)
         return self._get_file(filename)
 
 
-def get_filename_by_asset_key(asset_key: str) -> str:
+def get_filename_by_asset_name(asset_key: str) -> str:
     """
     Returns the filename associated with the given asset key. The last part(s) of the
     asset key are assumed to be the file extension.
