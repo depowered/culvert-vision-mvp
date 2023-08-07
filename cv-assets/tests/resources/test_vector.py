@@ -1,4 +1,4 @@
-from cv_assets.resources.file_storage.vector import get_filename_by_asset_name
+from cv_assets.resources.vector import get_filename_by_asset_name
 
 
 def test_get_filename_by_asset_name_gpkg():
