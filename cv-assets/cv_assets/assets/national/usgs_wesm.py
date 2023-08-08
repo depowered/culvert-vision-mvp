@@ -3,20 +3,16 @@ from string import Template
 import pandas as pd
 from dagster import asset
 
-from cv_assets.config import get_settings
 from cv_assets.resources.postgis import PGTable, PostGISResource
 from cv_assets.resources.vector import LocalVectorFileStorage, VectorFile
 from cv_assets.utils import load_table_from_parquet, run_shell_cmd
 
-settings = get_settings()
-TARGET_EPSG = settings.target_epsg
-
 
 @asset
-def raw_usgs_wesm(vector_storage: LocalVectorFileStorage) -> VectorFile:
+def source_usgs_wesm(vector_storage: LocalVectorFileStorage) -> VectorFile:
     """Download USGS Workunit Extent Spatial Metadata (WESM) GeoPackage from source"""
 
-    output = vector_storage.get_file_by_filename("raw_usgs_wesm.gpkg")
+    output = vector_storage.get_file_by_filename("source_usgs_wesm.gpkg")
 
     # The file is large, avoid redownloading if it already exists
     if output.path.exists():
@@ -34,19 +30,19 @@ def raw_usgs_wesm(vector_storage: LocalVectorFileStorage) -> VectorFile:
 
 
 @asset
-def stg_usgs_wesm(
-    vector_storage: LocalVectorFileStorage, raw_usgs_wesm: VectorFile
+def raw_usgs_wesm(
+    vector_storage: LocalVectorFileStorage, source_usgs_wesm: VectorFile
 ) -> VectorFile:
-    """Filter and reproject USGS WESM GeoPackage to Parquet"""
+    """Convert USGS WESM source to Parquet. The project requires high density surveys,
+    so this step filters for workunits with Quality Level 0 or 1."""
 
-    output = vector_storage.get_file_by_filename("stg_usgs_wesm.parquet")
+    output = vector_storage.get_file_by_filename("raw_usgs_wesm.parquet")
 
     cmd = Template(
         """
         ogr2ogr \
             -f Parquet \
-            -t_srs $to_srs \
-            -sql "SELECT * FROM WESM WHERE workunit LIKE 'MN%' AND ql IN ('QL 0', 'QL 1')" \
+            -sql "SELECT * FROM WESM WHERE ql IN ('QL 0', 'QL 1')" \
             $output $input
         """
     )
@@ -54,28 +50,27 @@ def stg_usgs_wesm(
     run_shell_cmd(
         cmd=cmd,
         output=output.path,
-        input=raw_usgs_wesm.path,
-        to_srs=f"EPSG:{TARGET_EPSG}",
+        input=source_usgs_wesm.path,
     )
 
     return output
 
 
 @asset
-def workunit_ids(stg_usgs_wesm: VectorFile) -> list[int]:
+def workunit_ids(raw_usgs_wesm: VectorFile) -> list[int]:
     """List of workunit_id in filtered USGS WESM to be used as the filtering
     criteria for USGS OPR TESM"""
-    df = pd.read_parquet(path=stg_usgs_wesm.path, columns=["workunit_id"])
+    df = pd.read_parquet(path=raw_usgs_wesm.path, columns=["workunit_id"])
     return df["workunit_id"].to_list()
 
 
 @asset
-def pg_stg_usgs_wesm(stg_usgs_wesm: VectorFile, postgis: PostGISResource) -> PGTable:
-    """Load USGS WESM Parquet into PostGIS table"""
-    output = PGTable(schema="mn", table="usgs_workunits")
+def pg_raw_usgs_wesm(raw_usgs_wesm: VectorFile, postgis: PostGISResource) -> PGTable:
+    """Load USGS WESM Parquet into PostGIS"""
+    output = PGTable(schema="national", table="raw_usgs_wesm")
 
     load_table_from_parquet(
-        input=stg_usgs_wesm.path,
+        input=raw_usgs_wesm.path,
         dsn=postgis.dsn,
         schema=output.schema,
         table=output.table,
