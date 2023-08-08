@@ -6,8 +6,7 @@ from dagster import asset
 from cv_assets.config import get_settings
 from cv_assets.resources.postgis import PGTable, PostGISResource
 from cv_assets.resources.vector import LocalVectorFileStorage, VectorFile
-from cv_assets.utils import run_shell_cmd
-from cv_assets.vectors.load_pg_table import load_table_from_parquet
+from cv_assets.utils import load_table_from_parquet, run_shell_cmd
 
 settings = get_settings()
 TARGET_EPSG = settings.target_epsg
