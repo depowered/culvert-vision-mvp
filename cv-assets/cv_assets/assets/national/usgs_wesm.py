@@ -64,7 +64,10 @@ def workunit_ids(raw_usgs_wesm: VectorFile) -> list[int]:
     return df["workunit_id"].to_list()
 
 
-@asset
+# There is far more data in the USGS WESM parquet than is necessary for any given study
+# area. Instead of loading the whole dataset into PostGIS, state and workunit specific
+# assets can read the relevant parts from the parquet.
+# @asset
 def pg_raw_usgs_wesm(raw_usgs_wesm: VectorFile, postgis: PostGISResource) -> PGTable:
     """Load USGS WESM Parquet into PostGIS"""
     output = PGTable(schema="national", table="raw_usgs_wesm")
