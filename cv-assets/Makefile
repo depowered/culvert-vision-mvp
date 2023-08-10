@@ -6,9 +6,9 @@
 
 ## Lint and format code
 lint:
-	isort cv_assets
-	black cv_assets
-	ruff cv_assets
+	isort cv_assets tests
+	black cv_assets tests
+	ruff cv_assets tests
 
 ## Delete cache
 clean_cache:
@@ -20,9 +20,10 @@ clean_cache:
 # DAGSTER MANAGEMENT                                                               #
 #################################################################################
 
+include ../.env
 ## Launch dagster dev webserver
 dagster_dev:
-	env DAGSTER_HOME=/tmp/culvert-vision-mvp/dagster dagster dev
+	env DAGSTER_HOME=${DAGSTER_HOME} dagster dev
 
 #################################################################################
 # Self Documenting Commands                                                     #
