@@ -2,23 +2,24 @@ from string import Template
 
 from dagster import asset
 
-from cv_assets.config import get_settings
+from cv_assets.assets.minnesota.proj import crs
 from cv_assets.resources.postgis import PGTable, PostGISResource
 from cv_assets.resources.vector import LocalVectorFileStorage, VectorFile
 from cv_assets.utils import load_table_from_parquet, run_shell_cmd
 
-settings = get_settings()
-TARGET_EPSG = settings.target_epsg
-
 
 @asset
-def raw_mndnr_culvert_inventory(vector_storage: LocalVectorFileStorage) -> VectorFile:
+def source_mndnr_culvert_inventory(
+    vector_storage: LocalVectorFileStorage,
+) -> VectorFile:
     """Download MnDNR Culvert Inventory Suite as an ESRI File Geodatabase.
 
     The File Geodatabase source is chosen because the Shapefile and GeoPackage
     sources have truncated column names."""
 
-    output = vector_storage.get_file_by_filename("raw_mndnr_culvert_inventory.gdb.zip")
+    output = vector_storage.get_file_by_filename(
+        "source_mndnr_culvert_inventory.gdb.zip"
+    )
 
     cmd = Template("curl --create-dirs --output $output $url")
 
@@ -32,15 +33,15 @@ def raw_mndnr_culvert_inventory(vector_storage: LocalVectorFileStorage) -> Vecto
 
 
 @asset
-def stg_mndnr_stream_crossing_summary(
+def raw_mndnr_stream_crossing_summary(
     vector_storage: LocalVectorFileStorage,
-    raw_mndnr_culvert_inventory: VectorFile,
+    source_mndnr_culvert_inventory: VectorFile,
 ) -> VectorFile:
     """Extract and reproject the Stream_Crossing_Summary layer from the MnDOT Culvert
-    Inventory and write to Parquet"""
+    Inventory to parquet"""
 
     output = vector_storage.get_file_by_filename(
-        "stg_mndnr_stream_crossing_summary.parquet"
+        "raw_mndnr_stream_crossing_summary.parquet"
     )
 
     cmd = Template(
@@ -55,23 +56,23 @@ def stg_mndnr_stream_crossing_summary(
 
     run_shell_cmd(
         cmd=cmd,
-        to_srs=f"EPSG:{TARGET_EPSG}",
+        to_srs=f"EPSG:{crs.to_epsg()}",
         output=output.path,
-        input=raw_mndnr_culvert_inventory.path,
+        input=source_mndnr_culvert_inventory.path,
     )
 
     return output
 
 
 @asset
-def pg_stg_mndnr_stream_crossing_summary(
-    stg_mndnr_stream_crossing_summary: VectorFile, postgis: PostGISResource
+def pg_raw_mndnr_stream_crossing_summary(
+    raw_mndnr_stream_crossing_summary: VectorFile, postgis: PostGISResource
 ) -> PGTable:
-    """Load Stream Crossing Summary Parquet into PostGIS table"""
-    output = PGTable(schema="mn", table="mndnr_stream_crossing")
+    """Load Stream Crossing Summary Parquet into PostGIS"""
+    output = PGTable(schema="minnesota", table="raw_mndnr_stream_crossing")
 
     load_table_from_parquet(
-        input=stg_mndnr_stream_crossing_summary.path,
+        input=raw_mndnr_stream_crossing_summary.path,
         dsn=postgis.dsn,
         schema=output.schema,
         table=output.table,
@@ -81,17 +82,17 @@ def pg_stg_mndnr_stream_crossing_summary(
 
 
 @asset
-def int_mndnr_culvert_opening(
+def raw_mndnr_culvert_opening(
     vector_storage: LocalVectorFileStorage,
-    raw_mndnr_culvert_inventory: VectorFile,
+    source_mndnr_culvert_inventory: VectorFile,
 ) -> VectorFile:
     """Extract and reproject the Culvert_Opening layer from the MnDOT Culvert
-    Inventory to an intermediate GeoPackage.
+    Inventory to parquet.
 
-    The source layer is incompatible with the Parquet driver, so the GeoPackage
-    is used as a compatibility intermediate."""
+    The source layer is incompatible with the Parquet driver, so an intermediate
+    GeoPackage is used as a compatible step."""
 
-    output = vector_storage.get_file_by_filename("int_mndnr_culvert_opening.gpkg")
+    temp_gpkg = vector_storage.get_file_by_filename("temp_mndnr_culvert_opening.gpkg")
 
     cmd = Template(
         """
@@ -105,43 +106,36 @@ def int_mndnr_culvert_opening(
 
     run_shell_cmd(
         cmd=cmd,
-        to_srs=f"EPSG:{TARGET_EPSG}",
-        output=output.path,
-        input=raw_mndnr_culvert_inventory.path,
+        to_srs=f"EPSG:{crs.to_epsg()}",
+        output=temp_gpkg.path,
+        input=source_mndnr_culvert_inventory.path,
     )
 
-    return output
-
-
-@asset
-def stg_mndnr_culvert_opening(
-    vector_storage: LocalVectorFileStorage,
-    int_mndnr_culvert_opening: VectorFile,
-) -> VectorFile:
-    """Convert Culvert_Opening intermediate GeoPackage to Parquet"""
-
-    output = vector_storage.get_file_by_filename("stg_mndnr_culvert_opening.parquet")
+    output = vector_storage.get_file_by_filename("raw_mndnr_culvert_opening.parquet")
 
     cmd = Template("ogr2ogr -f Parquet $output $input")
 
     run_shell_cmd(
         cmd=cmd,
         output=output.path,
-        input=int_mndnr_culvert_opening.path,
+        input=temp_gpkg.path,
     )
+
+    # Remove temporary GeoPackage
+    temp_gpkg.path.unlink()
 
     return output
 
 
 @asset
 def pg_stg_mndnr_culvert_opening(
-    stg_mndnr_culvert_opening: VectorFile, postgis: PostGISResource
+    raw_mndnr_culvert_opening: VectorFile, postgis: PostGISResource
 ) -> PGTable:
-    """Load Stream Crossing Summary Parquet into PostGIS table"""
-    output = PGTable(schema="mn", table="mndnr_culvert_opening")
+    """Load Stream Crossing Summary Parquet into PostGIS"""
+    output = PGTable(schema="minnesota", table="raw_mndnr_culvert_opening")
 
     load_table_from_parquet(
-        input=stg_mndnr_culvert_opening.path,
+        input=raw_mndnr_culvert_opening.path,
         dsn=postgis.dsn,
         schema=output.schema,
         table=output.table,
