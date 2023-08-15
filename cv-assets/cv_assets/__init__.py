@@ -5,6 +5,7 @@ from cv_assets.assets.minnesota import (
     mn_counties,
     mndnr_culvert_inventory,
     mndnr_watershed_suite,
+    mngio_1000m_tile_index,
     workunits,
 )
 from cv_assets.assets.national import usgs_opr_tesm, usgs_wesm
@@ -23,6 +24,7 @@ minnesota_assets = load_assets_from_modules(
         mn_counties,
         mndnr_culvert_inventory,
         mndnr_watershed_suite,
+        mngio_1000m_tile_index,
         workunits,
     ],
     group_name="minnesota",
