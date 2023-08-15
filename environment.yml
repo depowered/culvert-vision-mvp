@@ -16,3 +16,8 @@ dependencies:
   # Geospatial
   - gdal
   - libgdal-arrow-parquet
+
+  - geopandas
+  - pyarrow # for geopandas.read_parquet
+  - geoalchemy2 # for geopandas.to_postgis
+  - psycopg2 # for geopandas.read_postgis

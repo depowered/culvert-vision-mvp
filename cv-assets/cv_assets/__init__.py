@@ -1,25 +1,42 @@
 from dagster import Definitions, load_assets_from_modules
 
+from cv_assets.assets.minnesota import (
+    goodhue_county_culvert_lines,
+    mn_counties,
+    mndnr_culvert_inventory,
+    mndnr_watershed_suite,
+    mngio_500m_tile_index,
+    mngio_1000m_tile_index,
+    workunits,
+)
+from cv_assets.assets.national import usgs_opr_tesm, usgs_wesm
 from cv_assets.config import get_settings
 from cv_assets.resources.postgis import PostGISResource
 from cv_assets.resources.vector import LocalVectorFileStorage
-from cv_assets.vectors import (
-    mndnr_culvert_inventory,
-    mndnr_watershed_suite,
-    usgs_opr_tesm,
-    usgs_wesm,
+
+national_assets = load_assets_from_modules(
+    [usgs_opr_tesm, usgs_wesm],
+    group_name="national",
 )
 
-vector_assets = load_assets_from_modules(
-    [mndnr_culvert_inventory, mndnr_watershed_suite, usgs_opr_tesm, usgs_wesm],
-    group_name="vectors",
+minnesota_assets = load_assets_from_modules(
+    [
+        goodhue_county_culvert_lines,
+        mn_counties,
+        mndnr_culvert_inventory,
+        mndnr_watershed_suite,
+        mngio_1000m_tile_index,
+        mngio_500m_tile_index,
+        workunits,
+    ],
+    group_name="minnesota",
 )
 
 settings = get_settings()
 VECTOR_FILE_STORAGE = str(settings.file_storage_dir.resolve() / "vector")
 
 defs = Definitions(
-    assets=vector_assets,
+    assets=[*national_assets, *minnesota_assets],
     resources={
         "postgis": PostGISResource.from_config(settings),
         "vector_storage": LocalVectorFileStorage(base_path=VECTOR_FILE_STORAGE),

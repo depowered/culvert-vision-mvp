@@ -2,7 +2,7 @@ import tempfile
 from pathlib import Path
 from string import Template
 
-from cv_assets.utils import run_shell_cmd
+from cv_assets.utils.shell_cmd import run_shell_cmd
 
 
 def create_pg_dump(output: Path, input: Path, schema: str, table: str) -> None:
