@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Protocol
 
+import psycopg2
 from dagster import ConfigurableResource
 
 
@@ -32,6 +33,39 @@ class PostGISResource(ConfigurableResource):
             postgres_host=config.postgres_host,
             postgres_port=config.postgres_port,
         )
+
+    def get_connection(self) -> psycopg2.connection:
+        """Get a connection to the PostGIS database. The caller is responsible for
+        closing the connection.
+
+        Example usage:
+            ```
+            conn = postgis.get_connection()
+            try:
+                with conn.cursor() as cursor:
+                    cursor.execute(...)
+            finally:
+                conn.close()
+            ```
+        """
+        return psycopg2.connect(self.dsn)
+
+    def execute_and_commit(self, query: str) -> None:
+        """Execute a query and commit a query that alters the database.
+
+        Example usage:
+            ```
+            query = "CREATE TABLE ..."
+            postgis.execute_and_commit(query)
+            ```
+        """
+        conn = self.get_connection()
+        try:
+            with conn:
+                with conn.cursor() as curs:
+                    curs.execute(query)
+        finally:
+            conn.close()
 
     @property
     def dsn(self) -> str:
