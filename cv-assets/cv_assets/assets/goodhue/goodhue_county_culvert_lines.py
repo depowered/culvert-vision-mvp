@@ -50,7 +50,7 @@ def pg_raw_goodhue_culverts(
     raw_goodhue_culverts: VectorFile, postgis: PostGISResource
 ) -> PGTable:
     """Load Goodhue Culverts parquet into PostGIS"""
-    output = PGTable(schema="minnesota", table="raw_goodhue_culverts")
+    output = PGTable(schema="goodhue", table="raw_goodhue_culverts")
 
     load_table_from_parquet(
         input=raw_goodhue_culverts.path,
