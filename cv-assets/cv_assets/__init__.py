@@ -1,3 +1,5 @@
+from dagster import Definitions, load_assets_from_modules
+
 from cv_assets.assets.goodhue import county_boundary, goodhue_county_culvert_lines
 from cv_assets.assets.minnesota import (
     mn_counties,
@@ -11,7 +13,6 @@ from cv_assets.assets.national import usgs_opr_tesm, usgs_wesm
 from cv_assets.config import get_settings
 from cv_assets.resources.postgis import PostGISResource
 from cv_assets.resources.vector import LocalVectorFileStorage
-from dagster import Definitions, load_assets_from_modules
 
 national_assets = load_assets_from_modules(
     [usgs_opr_tesm, usgs_wesm],
