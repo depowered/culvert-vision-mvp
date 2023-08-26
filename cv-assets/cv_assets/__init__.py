@@ -1,6 +1,10 @@
 from dagster import Definitions, load_assets_from_modules
 
-from cv_assets.assets.goodhue import county_boundary, goodhue_county_culvert_lines
+from cv_assets.assets.goodhue import (
+    county_boundary,
+    dem_1m,
+    goodhue_county_culvert_lines,
+)
 from cv_assets.assets.minnesota import (
     mn_counties,
     mndnr_culvert_inventory,
@@ -12,6 +16,7 @@ from cv_assets.assets.minnesota import (
 from cv_assets.assets.national import usgs_opr_tesm, usgs_wesm
 from cv_assets.config import get_settings
 from cv_assets.resources.postgis import PostGISResource
+from cv_assets.resources.raster import LocalRasterFileStorage
 from cv_assets.resources.vector import LocalVectorFileStorage
 
 national_assets = load_assets_from_modules(
@@ -32,16 +37,18 @@ minnesota_assets = load_assets_from_modules(
 )
 
 goodhue_assets = load_assets_from_modules(
-    [county_boundary, goodhue_county_culvert_lines], group_name="goodhue"
+    [county_boundary, dem_1m, goodhue_county_culvert_lines], group_name="goodhue"
 )
 
 settings = get_settings()
 VECTOR_FILE_STORAGE = str(settings.file_storage_dir.resolve() / "vector")
+RASTER_FILE_STORAGE = str(settings.file_storage_dir.resolve() / "raster")
 
 defs = Definitions(
     assets=[*national_assets, *minnesota_assets, *goodhue_assets],
     resources={
         "postgis": PostGISResource.from_config(settings),
         "vector_storage": LocalVectorFileStorage(base_path=VECTOR_FILE_STORAGE),
+        "raster_storage": LocalRasterFileStorage(base_path=RASTER_FILE_STORAGE),
     },
 )
