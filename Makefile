@@ -8,6 +8,7 @@ MAMBA_ENV = culvert-vision-mvp
 
 ## Set up the conda environment
 create_env:
+	conda config --set channel_priority strict
 	mamba env create --name $(MAMBA_ENV) --file environment.yml
 
 ## Update the conda environment to reflect changes to environment.yml
