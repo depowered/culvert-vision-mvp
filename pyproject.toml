@@ -8,9 +8,35 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "~3.10"
-cv-assets = {path = "cv-assets", develop = true}
-
+cv-assets = { path = "cv-assets", develop = true }
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "*"
+ruff = "*"
+black = "*"
+isort = "*"
+pyright = "*"
+
+[tool.dagster]
+module_name = "cv_assets"
+
+[tool.ruff]
+# Enable flake8-bugbear (`B`) rules.
+select = ["E", "F", "B"]
+
+# Never enforce `E501` (line length violations).
+ignore = ["E501"]
+
+# Avoid trying to fix flake8-bugbear (`B`) violations.
+unfixable = ["B"]
+
+# Ignore `E402` (import violations) in all `__init__.py` files, and in `path/to/file.py`.
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[tool.isort]
+profile = "black"
