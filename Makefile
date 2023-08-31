@@ -1,33 +1,53 @@
-.PHONY: create_env update_env remove_env activate_env deactivate_env
+.ONESHELL:
+.PHONY: poetry_install create_env update_env remove_env activate_env deactivate_env
 
 #################################################################################
 # ENVIRONMENT MANAGEMENT                                                        #
 #################################################################################
 
-MAMBA_ENV = culvert-vision-mvp
+CONDA_ENV = culvert-vision-mvp
+CONDA_ACTIVATE = source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate
+
+# If direct_url.json files exist in the conda environment, poetry will intepret the
+# dependencies installed by conda as being different from those available on PyPI.
+# This causes poetry to 'upgrade' these dependencies to their PyPI versions, causing
+# conflicts with C libraries shared between libgdal-arrow-parquet and grpcio.
+# We remove the direct_url.json files to prevent this from happening.
+remove_direct_url_json:
+	find $$(conda info --envs | grep $(CONDA_ENV) | awk '{print $$2}') -name direct_url.json -delete
+
+poetry_install:
+	$(CONDA_ACTIVATE) $(CONDA_ENV) && poetry lock && poetry install
+
+mamba_env_create:
+	conda config --set channel_priority strict
+	mamba env create --name $(CONDA_ENV) --file environment.yml
+
+mamba_env_update:
+	mamba env update --name $(CONDA_ENV) --file environment.yml --prune
 
 ## Set up the conda environment
-create_env:
-	conda config --set channel_priority strict
-	mamba env create --name $(MAMBA_ENV) --file environment.yml
+create_env: mamba_env_create remove_direct_url_json poetry_install activate_env
 
-## Update the conda environment to reflect changes to environment.yml
-update_env:
-	mamba env update --name $(MAMBA_ENV) --file environment.yml --prune
+## Update the conda environment
+update_env: mamba_env_update remove_direct_url_json poetry_install activate_env
 
 ## Remove the conda environment
 remove_env:
-	conda env remove --name $(MAMBA_ENV)
+	conda env remove --name $(CONDA_ENV)
+
+## Rebuild the conda environment from scratch
+rebuild_env: remove_env create_env
 
 ## Displays the command to activate the conda environment
 activate_env:
 	@echo "To activate this environment, use\n"
-	@echo "\t$$ mamba activate $(MAMBA_ENV)\n"
+	@echo "\t$$ conda activate $(CONDA_ENV)\n"
 
 ## Displays the command to deactivate an active environment
 deactivate_env:
 	@echo "To deactivate an activate environment, use\n"
-	@echo "\t$$ mamba deactivate\n"
+	@echo "\t$$ conda deactivate\n"
 
 #################################################################################
 # Self Documenting Commands                                                     #

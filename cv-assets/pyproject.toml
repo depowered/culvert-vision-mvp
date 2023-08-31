@@ -1,6 +1,32 @@
+[tool.poetry]
+name = "cv-assets"
+version = "0.1.0"
+description = "Dagster project for creating training-ready computer vision assets."
+authors = ["Devin Power <dpwr16@gmail.com>"]
+readme = "README.md"
+packages = [{ include = "cv_assets" }]
+
+[tool.poetry.dependencies]
+python = "~3.10"
+grpcio = "1.56.2"
+dagster = "^1.4"
+dagster-webserver = "^1.4"
+python-dotenv = "^1.0"
+pyarrow = "~13.0"
+pandas = { version = "^1.5", extras = ["parquet"] }
+psycopg2 = "^2.9"
+pyproj = "~3.6"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "*"
+ruff = "*"
+black = "*"
+isort = "*"
+pyright = "*"
+
 [build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
 
 [tool.dagster]
 module_name = "cv_assets"
