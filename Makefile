@@ -1,11 +1,12 @@
-.ONESHELL:
 .PHONY: poetry_install create_env update_env remove_env activate_env deactivate_env
 
 #################################################################################
 # ENVIRONMENT MANAGEMENT                                                        #
 #################################################################################
 
+SHELL = /bin/zsh
 CONDA_ENV = culvert-vision-mvp
+CONDA_ENV_PATH = $$(conda info --base)/envs/$(CONDA_ENV)
 CONDA_ACTIVATE = source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate
 
 # If direct_url.json files exist in the conda environment, poetry will intepret the
@@ -14,7 +15,7 @@ CONDA_ACTIVATE = source $$(conda info --base)/etc/profile.d/conda.sh ; conda act
 # conflicts with C libraries shared between libgdal-arrow-parquet and grpcio.
 # We remove the direct_url.json files to prevent this from happening.
 remove_direct_url_json:
-	find $$(conda info --envs | grep $(CONDA_ENV) | awk '{print $$2}') -name direct_url.json -delete
+	find $(CONDA_ENV_PATH) -name direct_url.json -delete
 
 poetry_install:
 	$(CONDA_ACTIVATE) $(CONDA_ENV) && poetry lock && poetry install
