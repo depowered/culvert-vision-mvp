@@ -13,6 +13,7 @@ Available rules:
 activate_env        Displays the command to activate the conda environment
 create_env          Set up the conda environment
 deactivate_env      Displays the command to deactivate an active environment
+rebuild_env         Rebuild the conda environment from scratch
 remove_env          Remove the conda environment
-update_env          Update the conda environment to reflect changes to environment.yml
+update_env          Update the conda environment
 ```

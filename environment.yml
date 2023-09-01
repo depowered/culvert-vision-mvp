@@ -2,22 +2,15 @@ name: culvert-vision-mvp
 channels:
   - conda-forge
 dependencies:
-  # Python packages
-  - python=3.11
-  - dagster=1.4.2
-
+  # Python environment
+  - python=3.10.*
   - pip
-  - pip:
-    - -e ./cv-assets/[dev]
+  - poetry=1.6.*
 
-  # Unix utilities
-  - curl
 
   # Geospatial
-  - gdal
-  - libgdal-arrow-parquet
-
-  - geopandas
-  - pyarrow # for geopandas.read_parquet
-  - geoalchemy2 # for geopandas.to_postgis
-  - psycopg2 # for geopandas.read_postgis
+  - gdal=3.7.1
+  - libgdal-arrow-parquet=3.7.1 # for gdal's GeoParquet driver
+  # gRPC is a dependency of dagster-webserver
+  # It is pinned for compatibility with libgdal-arrow-parquet
+  - grpcio=1.56.2 
