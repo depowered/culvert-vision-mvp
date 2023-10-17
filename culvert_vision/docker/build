@@ -19,6 +19,6 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         usage
     else
         echo "Building culvert_vision Docker image"
-        docker build -t culvert_vision -f Dockerfile .
+        docker build --build-arg USERNAME=${USER} -t culvert_vision -f Dockerfile .
     fi
 fi
