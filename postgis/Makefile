@@ -14,7 +14,7 @@ stop_postgis_dev:
 
 ## Launch production PostGIS database
 start_postgis_prod:
-	docker compose --env-file prod.env up -d  postgis-prod dbbackups
+	docker compose --env-file ../.env up -d  postgis-prod dbbackups
 
 ## Shutdown production PostGIS database
 stop_postgis_prod:
