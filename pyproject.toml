@@ -21,9 +21,6 @@ black = "*"
 isort = "*"
 pyright = "*"
 
-[tool.dagster]
-module_name = "cv_assets"
-
 [tool.ruff]
 # Enable flake8-bugbear (`B`) rules.
 select = ["E", "F", "B"]

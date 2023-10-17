@@ -16,3 +16,7 @@ pyarrow = "~13.0"
 pandas = { version = "^1.5", extras = ["parquet"] }
 psycopg2 = "^2.9"
 pyproj = "~3.6"
+urllib3 = "^1.26.17"
+
+[tool.dagster]
+module_name = "cv_assets"
